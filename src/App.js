@@ -1,49 +1,44 @@
-import logo from "./logo.svg";
+// import logo from "./logo.svg";
+import React, { useRef } from "react";
 import "./App.css";
-var ReactS3Uploader = require("react-s3-uploader");
+import S3 from "react-aws-s3";
 
 function App() {
+  const fileInput = useRef();
+  const handleClick = (event) => {
+    event.preventDefault();
+    let file = fileInput.current.files[0];
+    let newFileName = fileInput.current.files[0].name.replace(/\..+$/, "");
+    const config = {
+      bucketName: process.env.REACT_APP_BUCKET_NAME,
+      region: process.env.REACT_APP_REGION,
+      accessKeyId: process.env.REACT_APP_ACCESS_ID,
+      secretAccessKey: process.env.REACT_APP_ACCESS_KEY,
+
+    };
+    const ReactS3Client = new S3(config);
+    ReactS3Client.uploadFile(file, newFileName).then((data) => {
+      console.log(data);
+      if (data.status === 204) {
+        console.log("success");
+      } else {
+        console.log("fail");
+      }
+    });
+  };
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <ReactS3Uploader
-          signingUrl="/s3/sign"
-          signingUrlMethod="GET"
-          accept="image/*"
-          s3path="/uploads/"
-          preprocess={onUploadStart}
-          onSignedUrl={onSignedUrl}
-          onProgress={onUploadProgress}
-          onError={onUploadError}
-          onFinish={onUploadFinish}
-          // signingUrlHeaders={{ additional: headers }}
-          // signingUrlQueryParams={{ additional: query - params }}
-          signingUrlWithCredentials={true} // in case when need to pass authentication credentials via CORS
-          uploadRequestHeaders={{ "x-amz-acl": "public-read" }} // this is the default
-          scrubFilename={(filename) => filename.replace(/[^\w\d_\-.]+/gi, "")}
-          // inputRef={(cmp) => (uploadInput = cmp)}
-          autoUpload={true}
-        />
-      </header>
-    </div>
+    <>
+      <form className="upload-steps" onSubmit={handleClick}>
+        <label>
+          Upload file:
+          <input type="file" ref={fileInput} />
+        </label>
+        <br />
+        <button type="submit">Upload</button>
+      </form>
+    </>
   );
 }
 
-function onUploadStart() {
-  console.log("Function: onUploadStart");
-}
-function onSignedUrl() {
-  console.log("Function: onSignedUrl");
-}
-function onUploadProgress() {
-  console.log("Function: onUploadProgress");
-}
-function onUploadError() {
-  console.log("Function: onUploadError");
-}
-function onUploadFinish() {
-  console.log("Function: onUploadFinish");
-}
-
 export default App;
+
